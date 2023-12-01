@@ -4,12 +4,10 @@ import 'package:flutter_crud/models/user.dart';
 
 class UserTile extends StatelessWidget {
   User user;
-
   UserTile({
     super.key,
     required this.user,
     });
-
   @override
   Widget build(BuildContext context) {
     CircleAvatar ca;
@@ -26,12 +24,10 @@ class UserTile extends StatelessWidget {
         width: 100,
         child: Row(
           children: [
+            IconButton(onPressed: (){ 
+            }, icon: Icon(Icons.edit), color: Color.fromARGB(255, 10, 128, 141)),
             IconButton(onPressed: (){
-              
-            }, icon: Icon(Icons.edit), color: Color.fromARGB(255, 10, 141, 114),),
-            IconButton(onPressed: (){
-
-            }, icon: Icon(Icons.delete), color: Colors.red,),
+            }, icon: Icon(Icons.delete), color: const Color.fromARGB(255, 228, 20, 5),),
           ],
         ),
       ),
