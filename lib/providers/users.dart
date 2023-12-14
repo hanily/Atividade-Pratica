@@ -1,11 +1,12 @@
-import 'dart:math';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_crud/data/dummy_users.dart';
 import 'package:flutter_crud/models/user.dart';
+import 'package:http/http.dart' as http;
 
-class Users with ChangeNotifier{
-  Map<String, User> _items = {...DUMMY_USERS};
+class Users extends ChangeNotifier {
+  static const _baseUrl =
+      'https://flutterappdm-default-rtdb.firebaseio.com/%3A/users/-NlctzGu39s0ImtU5qa8';
+  Map<String, User> _items = {};
 
   List<User> get all {
     return [..._items.values];
@@ -15,42 +16,73 @@ class Users with ChangeNotifier{
     return _items.length;
   }
 
-  User byIndex(int indice) {
-    return _items.values.elementAt(indice);
+  User byIndex(int i) {
+    return _items.values.elementAt(i);
   }
 
-  //cadastrar//
-
-  void put(User user){
-
-    if(user.id.trim().isNotEmpty && _items.containsKey(user.id) ){
-      //update
-      _items.update(user.id, (_) => User(
-        id: user.id,
-        nome: user.nome,
-        email: user.email,
-        avatarURL: user.avatarURL,
-      ),
-    );
+  Future<void> put(User user) async {
+    if (user == null) {
+      return;
     }
-    else{
-      final id = Random().nextDouble().toString();
-    
-    _items.putIfAbsent(
-      id,
-      () => User(
-        id: id, 
-        nome: user.nome, 
-        email: user.email, 
-        avatarURL: user.avatarURL,),
-    );
+
+    try {
+      if (user.id != null && user.id.trim().isNotEmpty) {
+        final response = await http.put(
+          Uri.parse("$_baseUrl/users/${user.id}.json"),
+          body: json.encode({
+            'nome': user.nome,
+            'email': user.email,
+            'avatarURL': user.avatarURL,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          _items.update(
+            user.id,
+            (_) => User(
+              id: user.id,
+              nome: user.nome,
+              email: user.email,
+              avatarURL: user.avatarURL,
+            ),
+          );
+        }
+      } else {
+        final response = await http.post(
+          Uri.parse("$_baseUrl/users.json"),
+          body: json.encode({
+            'nome': user.nome,
+            'email': user.email,
+            'avatarURL': user.avatarURL,
+          }),
+        );
+
+        final responseBody = json.decode(response.body);
+        if (responseBody != null && responseBody.containsKey('name')) {
+          final id = responseBody['name'];
+          _items.putIfAbsent(
+            id,
+            () => User(
+              id: id,
+              nome: user.nome,
+              email: user.email,
+              avatarURL: user.avatarURL,
+            ),
+          );
+        }
+      }
+
+      notifyListeners();
+    } catch (error) {
+      print('Erro ao realizar operação: $error');
+      // Adicione tratamento de erro adequado conforme necessário
+    }
   }
 
+  void remove(User user) {
+    if (user != null && user.id != null) {
+      _items.remove(user.id);
+      notifyListeners();
     }
-    
-
-  @override
-  void notifyListeners();
-  
-  
+  }
 }
